@@ -1,6 +1,7 @@
 require 'pry'
 require 'nokogiri'
 require "inspectr/version"
+require 'open-uri'
 
 
 module Inspectr
