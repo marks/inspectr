@@ -1,3 +1,5 @@
+require 'pry'
+require 'nokogiri'
 require "inspectr/version"
 
 
@@ -10,3 +12,5 @@ end
 #htphan test
 
 #another test
+
+binding.pry
