@@ -1,3 +1,5 @@
+require 'pry'
+require 'nokogiri'
 require "inspectr/version"
 
 module Inspectr
@@ -9,3 +11,5 @@ end
 #htphan test
 
 #another test
+
+binding.pry
