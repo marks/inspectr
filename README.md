@@ -1,5 +1,22 @@
 # Inspectr
 
+We're developing an app that takes restaurant inspection data from publicly available websites and makes it easy to access to the public, using Ruby on Rails as a framework.  We're starting with Atlanta, then scaling to Georgia.  This project started on 6/6/15 at the Atlanta Hack for Change event.
+
+#### Project Administration ####
+- Code for Atlanta Slack: <http://codeforatlanta.slack.com>
+- Google Drive: email <brent.brewington@gmail.com> for an invite link
+- Meetup: <http://www.meetup.com/codeforatlanta>
+- Code For Atlanta: <http://www.codeforatlanta.org>
+- Trello Board: <https://trello.com/b/78I8AWyV/inspectr>
+  
+#### Project Milestones ####
+1. Milestone 1
+2. Milestone 2
+3. Milestone 3
+
+#### End Goal: [Insert end goal here] ####
+
+## Gem Introduction ##
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/inspectr`. To experiment with that code, run `bin/console` for an interactive prompt.
 
 TODO: Delete this and the text above, and describe your gem
