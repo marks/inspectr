@@ -54,16 +54,13 @@ module Inspectr
   end
 
 
-
-
   class FormScraper
 
     attr_reader :form_array 
 
     def initialize(file)
-      @form_array = self.file_to_array(file)
+      @inspection_array = self.file_to_array(file)
       @base = "http://ga.healthinspections.us/"
-      @form_links = []
     end
 
     def file_to_array(file)
@@ -76,19 +73,20 @@ module Inspectr
       array
     end
 
-    def get_form_links(start,finish)
-      inspections = @form_array[start-1..finish-1]
-      form_links = []
-      inspections.each do |inspection|
-        doc = Nokogiri::HTML(open(inspection))
-        form_link = doc.css("a:contains('View Form')").attribute('href').value
-        form_link = form_link[3..form_link.length] #removes ../ from every link
-        form_url = @base + form_link
-        form_links << form_url
-        sleep(2.8)
+    def get_form_links(write_file,start,up_to)
+      inspections = @inspection_array[start..finish]
+      File.open(write_file, "w") do |f|
+        inspections.each_with_index do |inspection,index|
+          puts "importing data: #{index + 1} out of #{inspections.length}..."
+          doc = Nokogiri::HTML(open(inspection))
+          form_link = doc.css("a:contains('View Form')").attribute('href').value
+          form_link = form_link[3..form_link.length] #removes ../ from every link
+          form_url = @base + form_link
+          f.puts form_url
+          sleep(2.8)
+        end
       end
-      form_links
-   end
+    end
 
     def get_form_data(read_file, write_file,start,up_to)
       form_array = self.file_to_array(read_file)
@@ -136,14 +134,16 @@ module Inspectr
 
 end
 
-# app = Inspectr::FormScraper.new("lib/links/all_links.txt")
-# app.get_form_data("form_links1-10000.txt","form_data_test2.csv",0,999)
+app = Inspectr::FormScraper.new("lib/links/inspection_links/2015_inspections.txt")
+
+# app.get_form_links("lib/links/form_links/2015-forms_part_2.txt",1910,1911)
+app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part1.csv",0,999)
 # form_links = app.get_form_links(1001,10000) #gets form links
 # puts form_links
 # generated inspection links for Fulton County
 
-app = Inspectr::PageScraper.new
-app.all_inspections("test.txt",0,96)
+# app = Inspectr::PageScraper.new
+# app.all_inspections("test.txt",0,96)
 # puts inspections
 
 
