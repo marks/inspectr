@@ -12,15 +12,15 @@ module Inspectr
 
     def initialize
       @base = "http://ga.healthinspections.us/georgia/"
-      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?1=1&f=s&r=name&s=&inspectionType=&sd=05/07/2015&ed=06/06/2015&useDate=NO&county=Fulton"))
+      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1921&1=1&f=s&r=name&s=&inspectionType=&sd=01/01/2015&ed=06/06/2015&useDate=YES&county=Fulton&"))
       @pages = self.all_pages(init)
       @inspections = nil
     end
 
     def all_pages(init) 
       pages = init.css("td.body a[href*='search.cfm']")
-       @pages = pages.map do |page|
-          @base + page['href']
+      @pages = pages.map do |page|
+        @base + page['href']
       end
     end
 
@@ -32,16 +32,29 @@ module Inspectr
       end
     end
 
-    def all_inspections(start,finish)
-      array = []
-      (start..finish).each do |x|
-        array << self.inspection_links(self.pages[x])
-      sleep(2.5)
+    def all_inspections(write_file,start,finish)
+      File.open(write_file,"w") do |f|
+        (start..finish).each_with_index do |x,index|
+          puts "adding #{index+1}..."
+          f.puts self.inspection_links(self.pages[x])
+        sleep(2.8)
+        end
       end
-      @inspections = array.flatten
+      erase_duplicates(write_file)
     end
 
+    def erase_duplicates(write_file)
+      array = IO.readlines(write_file).uniq
+      File.open(write_file, "w") do |f|
+        array.each do |link|
+          f.puts link
+        end
+      end
+    end
   end
+
+
+
 
   class FormScraper
 
@@ -82,30 +95,28 @@ module Inspectr
       form_array = form_array[start..up_to]
       CSV.open(write_file, "wb") do |csv|
         form_array.each_with_index do |form_link, index|
-          unless form_link =~ /Tourist/
-            doc = Nokogiri::HTML(open(form_link))
-            puts "importing data: #{index + 1} out of #{form_array.length}..."
+          doc = Nokogiri::HTML(open(form_link))
+          puts "importing data: #{index + 1} out of #{form_array.length}..."
 
-            restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9& ','')
-            inspection_date = self.restaurant_info(doc,"Date").strip
-            inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y%m%d')
-            street = self.restaurant_info(doc,"Address").strip
+          restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9& ','')
+          inspection_date = self.restaurant_info(doc,"Date").strip
+          inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y/%m/%d')
+          street = self.restaurant_info(doc,"Address").strip
 
-            city = self.restaurant_info(doc,"City/State").strip
-            city = city[0..-4] #removes state from string with index
+          city = self.restaurant_info(doc,"City/State").strip
+          city = city[0..-4] #removes state from string with index
 
-            state = self.restaurant_info(doc,"City/State").split(" ")
-            state = state.last
+          state = self.restaurant_info(doc,"City/State").split(" ")
+          state = state.last
 
-            permit = self.restaurant_info(doc,"Permit #").strip
+          permit = self.restaurant_info(doc,"Permit #").strip
 
-            zipcode = self.restaurant_info(doc,"Zipcode").strip
-            # current_grade = self.restaurant_score("#div_grade",doc)
-            current_score = self.restaurant_score("#div_finalScore",doc).to_i
+          zipcode = self.restaurant_info(doc,"Zipcode").strip
+          # current_grade = self.restaurant_score("#div_grade",doc)
+          current_score = self.restaurant_score("#div_finalScore",doc).to_i
 
-            csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score]
-            sleep(2.7)
-          end
+          csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score]
+          sleep(2.7)
         end
       end
     end
@@ -125,18 +136,16 @@ module Inspectr
 
 end
 
-app = Inspectr::FormScraper.new("lib/links/all_links.txt")
-app.get_form_data("form_links1-10000.txt","form_data_test2.csv",0,999)
-
+# app = Inspectr::FormScraper.new("lib/links/all_links.txt")
+# app.get_form_data("form_links1-10000.txt","form_data_test2.csv",0,999)
 # form_links = app.get_form_links(1001,10000) #gets form links
 # puts form_links
-
-
-# rest_data = app.get_form_data("form_links_test.txt")
 # generated inspection links for Fulton County
-# app = Inspectr::PageScraper.new
-# app.all_inspections(900,988)
-# puts app.inspections
+
+app = Inspectr::PageScraper.new
+app.all_inspections("test.txt",0,96)
+# puts inspections
+
 
 
 
