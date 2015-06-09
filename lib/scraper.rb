@@ -86,7 +86,7 @@ module Inspectr
             doc = Nokogiri::HTML(open(form_link))
             puts "importing data: #{index + 1} out of #{form_array.length}..."
 
-            restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9',' ')
+            restaurant_name = self.restaurant_info(doc,"Establishment").strip.'^A-Za-z0-9& ','')
             inspection_date = self.restaurant_info(doc,"Date").strip
             inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y%m%d')
             street = self.restaurant_info(doc,"Address").strip
@@ -126,7 +126,7 @@ module Inspectr
 end
 
 app = Inspectr::FormScraper.new("lib/links/all_links.txt")
-app.get_form_data("form_links1-10000.txt","form_data_test2.txt",0,1000)
+app.get_form_data("form_links1-10000.txt","form_data_test2.txt",0,10)
 
 # form_links = app.get_form_links(1001,10000) #gets form links
 # puts form_links
