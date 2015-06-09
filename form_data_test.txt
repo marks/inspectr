@@ -1,4 +1,4 @@
-permit,name,inspection_date,street,city,state,zipcode,grade,score
+business_id,name,inspection_date,address,city,state,postal_code,score
 1-32000, cue,06/19/2014,13700 HIGHWAY 9 STE 300,MILTON,GA,30004,A,96
 1-32000, cue,09/17/2013,13700 HIGHWAY 9 STE 300,MILTON,GA,30004,A,96
 1-32000, cue,01/04/2013,13700 HIGHWAY 9 STE 300,MILTON,GA,30004,A,91
