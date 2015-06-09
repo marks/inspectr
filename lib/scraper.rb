@@ -2,7 +2,7 @@ require 'pry'
 require 'nokogiri'
 require 'open-uri'
 require 'stringio'
-require 'json'
+require 'date'
 require 'csv'
 
 module Inspectr
@@ -45,7 +45,7 @@ module Inspectr
 
   class FormScraper
 
-    attr_reader :form_links
+    attr_reader :form_array 
 
     def initialize(file)
       @form_array = self.file_to_array(file)
@@ -65,38 +65,47 @@ module Inspectr
 
     def get_form_links(start,finish)
       inspections = @form_array[start-1..finish-1]
+      form_links = []
       inspections.each do |inspection|
         doc = Nokogiri::HTML(open(inspection))
         form_link = doc.css("a:contains('View Form')").attribute('href').value
         form_link = form_link[3..form_link.length] #removes ../ from every link
         form_url = @base + form_link
-        @form_links << form_url
+        form_links << form_url
         sleep(2.8)
       end
-      @form_links
+      form_links
    end
 
-    def get_form_data(new_file)
-      CSV.open(new_file, "wb") do |csv|
-        @form_links.each do |form_link|
-          doc = Nokogiri::HTML(open(form_link))
+    def get_form_data(read_file, write_file,start,up_to)
+      form_array = self.file_to_array(read_file)
+      form_array = form_array[start..up_to]
+      CSV.open(write_file, "wb") do |csv|
+        form_array.each_with_index do |form_link, index|
+          unless form_link =~ /Tourist/
+            doc = Nokogiri::HTML(open(form_link))
+            puts "importing data: #{index + 1} out of #{form_array.length}..."
 
-          restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9', '')
-          inspection_date = self.restaurant_info(doc,"Date").strip
-          street = self.restaurant_info(doc,"Address").strip
+            restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9',' ')
+            inspection_date = self.restaurant_info(doc,"Date").strip
+            inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y%m%d')
+            street = self.restaurant_info(doc,"Address").strip
 
-          city = self.restaurant_info(doc,"City/State").strip
-          city = city[0..-4] #removes state from string with index
+            city = self.restaurant_info(doc,"City/State").strip
+            city = city[0..-4] #removes state from string with index
 
-          state = self.restaurant_info(doc,"City/State").split(" ")
-          state = state.last
+            state = self.restaurant_info(doc,"City/State").split(" ")
+            state = state.last
 
-          zipcode = self.restaurant_info(doc,"Zipcode").strip
-          current_grade = self.restaurant_score("#div_grade",doc)
-          current_score = self.restaurant_score("#div_finalScore",doc).to_i
+            permit = self.restaurant_info(doc,"Permit #").strip
 
-          csv << [restaurant_name,inspection_date,street,city,state,zipcode,current_grade,current_score]
-          sleep(2.7)
+            zipcode = self.restaurant_info(doc,"Zipcode").strip
+            current_grade = self.restaurant_score("#div_grade",doc)
+            current_score = self.restaurant_score("#div_finalScore",doc).to_i
+
+            csv << [permit, restaurant_name,inspection_date,street,city,state,zipcode,current_grade,current_score]
+            sleep(2.7)
+          end
         end
       end
     end
@@ -117,8 +126,12 @@ module Inspectr
 end
 
 app = Inspectr::FormScraper.new("lib/links/all_links.txt")
-form_links = app.get_form_links(1001,10000) #gets form links
-puts form_links
+app.get_form_data("form_links1-10000.txt","form_data_test2.txt",0,1000)
+
+# form_links = app.get_form_links(1001,10000) #gets form links
+# puts form_links
+
+
 # rest_data = app.get_form_data("form_links_test.txt")
 # generated inspection links for Fulton County
 # app = Inspectr::PageScraper.new
