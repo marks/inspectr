@@ -137,7 +137,7 @@ end
 app = Inspectr::FormScraper.new("lib/links/inspection_links/2015_inspections.txt")
 
 # app.get_form_links("lib/links/form_links/2015-forms_part_2.txt",1910,1911)
-app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part1.csv",0,999)
+app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part2.csv",1000,1910)
 # form_links = app.get_form_links(1001,10000) #gets form links
 # puts form_links
 # generated inspection links for Fulton County
