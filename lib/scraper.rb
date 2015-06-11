@@ -12,7 +12,7 @@ module Inspectr
 
     def initialize
       @base = "http://ga.healthinspections.us/georgia/"
-      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1921&1=1&f=s&r=name&s=&inspectionType=&sd=01/01/2015&ed=06/06/2015&useDate=YES&county=Fulton&"))
+      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1&1=1&f=s&r=name&s=&inspectionType=&sd=01/01/2014&ed=12/31/2014&useDate=YES&county=Fulton&"))
       @pages = self.all_pages(init)
       @inspections = nil
     end
@@ -74,7 +74,7 @@ module Inspectr
     end
 
     def get_form_links(write_file,start,up_to)
-      inspections = @inspection_array[start..finish]
+      inspections = @inspection_array[start..up_to]
       File.open(write_file, "w") do |f|
         inspections.each_with_index do |inspection,index|
           puts "importing data: #{index + 1} out of #{inspections.length}..."
@@ -92,6 +92,7 @@ module Inspectr
       form_array = self.file_to_array(read_file)
       form_array = form_array[start..up_to]
       CSV.open(write_file, "wb") do |csv|
+        csv << ["business_id","name","address","city","state","postal_code","date","score"]
         form_array.each_with_index do |form_link, index|
           doc = Nokogiri::HTML(open(form_link))
           puts "importing data: #{index + 1} out of #{form_array.length}..."
@@ -134,17 +135,19 @@ module Inspectr
 
 end
 
-app = Inspectr::FormScraper.new("lib/links/inspection_links/2015_inspections.txt")
+# app = Inspectr::FormScraper.new("lib/links/inspection_links/2015_inspections.txt")
 
 # app.get_form_links("lib/links/form_links/2015-forms_part_2.txt",1910,1911)
-app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part2.csv",1000,1910)
-# form_links = app.get_form_links(1001,10000) #gets form links
-# puts form_links
-# generated inspection links for Fulton County
+# app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part2.csv",1000,1910)
+
+app = Inspectr::FormScraper.new("lib/links/inspection_links/2014_inspections.txt")
+# app.get_form_links("lib/links/form_links/2014-forms_part2.txt",4149,4609)
+app.get_form_data("lib/links/form_links/2014-forms.txt","form_data_2014_par2.csv",2927,4601)
 
 # app = Inspectr::PageScraper.new
-# app.all_inspections("test.txt",0,96)
-# puts inspections
+# binding.pry
+# app.all_inspections("lib/links/inspection_links/2014_inspections.txt",0,231)
+
 
 
 
