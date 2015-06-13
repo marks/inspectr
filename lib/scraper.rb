@@ -73,11 +73,10 @@ module Inspectr
       array
     end
 
-    def get_form_links(write_file, start, up_to)
-      inspections = @inspection_array[start..up_to]
+    def get_form_links(write_file)
       File.open(write_file, "w") do |f|
-        inspections.each_with_index do |inspection,index|
-          puts "getting form link: #{index + 1} out of #{inspections.length}..."
+        @inspection_array.each_with_index do |inspection,index|
+          puts "getting form link: #{index + 1} out of #{@inspection_array.length}..."
           doc = Nokogiri::HTML(open(inspection))
           form_link = doc.css("a:contains('View Form')").attribute('href').value
           form_link = form_link[3..form_link.length] #removes ../ from every link
@@ -88,9 +87,8 @@ module Inspectr
       end
     end
 
-    def get_form_data(read_file, write_file, start, up_to)
+    def get_form_data(read_file, write_file)
       form_array = self.file_to_array(read_file)
-      form_array = form_array[start..up_to]
       CSV.open(write_file, "wb") do |csv|
         csv << ["business_id","name","address","city","state","postal_code","date","score","grade"]
         form_array.each_with_index do |form_link, index|
