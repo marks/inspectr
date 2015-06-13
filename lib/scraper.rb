@@ -10,9 +10,9 @@ module Inspectr
 
    attr_reader :pages, :inspections, :form_links
 
-    def initialize
+    def initialize(start_date="01/01/2014", end_date="01/01/2014")
       @base = "http://ga.healthinspections.us/georgia/"
-      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1&1=1&f=s&r=name&s=&inspectionType=&sd=01/01/2014&ed=12/31/2014&useDate=YES&county=Fulton&"))
+      init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1&1=1&f=s&r=name&s=&inspectionType=&sd=#{start_date}&ed=#{end_date}&useDate=YES&county=Fulton&"))
       @pages = self.all_pages(init)
       @inspections = nil
     end
@@ -35,7 +35,7 @@ module Inspectr
     def all_inspections(write_file,start,finish)
       File.open(write_file,"w") do |f|
         (start..finish).each_with_index do |x,index|
-          puts "adding #{index+1}..."
+          puts "adding links for page #{index+1}..."
           f.puts self.inspection_links(self.pages[x])
         sleep(2.8)
         end
@@ -73,11 +73,11 @@ module Inspectr
       array
     end
 
-    def get_form_links(write_file,start,up_to)
+    def get_form_links(write_file, start, up_to)
       inspections = @inspection_array[start..up_to]
       File.open(write_file, "w") do |f|
         inspections.each_with_index do |inspection,index|
-          puts "importing data: #{index + 1} out of #{inspections.length}..."
+          puts "getting form link: #{index + 1} out of #{inspections.length}..."
           doc = Nokogiri::HTML(open(inspection))
           form_link = doc.css("a:contains('View Form')").attribute('href').value
           form_link = form_link[3..form_link.length] #removes ../ from every link
@@ -88,11 +88,11 @@ module Inspectr
       end
     end
 
-    def get_form_data(read_file, write_file,start,up_to)
+    def get_form_data(read_file, write_file, start, up_to)
       form_array = self.file_to_array(read_file)
       form_array = form_array[start..up_to]
       CSV.open(write_file, "wb") do |csv|
-        csv << ["business_id","name","address","city","state","postal_code","date","score"]
+        csv << ["business_id","name","address","city","state","postal_code","date","score","grade"]
         form_array.each_with_index do |form_link, index|
           doc = Nokogiri::HTML(open(form_link))
           puts "importing data: #{index + 1} out of #{form_array.length}..."
@@ -114,7 +114,9 @@ module Inspectr
           # current_grade = self.restaurant_score("#div_grade",doc)
           current_score = self.restaurant_score("#div_finalScore",doc).to_i
 
-          csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score]
+          current_grade = self.restaurant_score("#div_grade",doc).strip
+
+          csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score,current_grade]
           sleep(2.7)
         end
       end
@@ -134,22 +136,3 @@ module Inspectr
   end
 
 end
-
-# app = Inspectr::FormScraper.new("lib/links/inspection_links/2015_inspections.txt")
-
-# app.get_form_links("lib/links/form_links/2015-forms_part_2.txt",1910,1911)
-# app.get_form_data("lib/links/form_links/2015-forms.txt","form_data_2015_part2.csv",1000,1910)
-
-app = Inspectr::FormScraper.new("lib/links/inspection_links/2014_inspections.txt")
-# app.get_form_links("lib/links/form_links/2014-forms_part2.txt",4149,4609)
-app.get_form_data("lib/links/form_links/2014-forms.txt","form_data_2014_par2.csv",2927,4601)
-
-# app = Inspectr::PageScraper.new
-# binding.pry
-# app.all_inspections("lib/links/inspection_links/2014_inspections.txt",0,231)
-
-
-
-
-
-
