@@ -26,10 +26,17 @@ module Inspectr
     end
 
     def inspection_links(link)
-      page_link_data = Nokogiri::HTML(open(link)) 
-      links = page_link_data.css("td.body a:contains('Grade')")
-      links.map do |inspection|
-        @base + inspection['href']
+      begin
+        Retriable.retriable on: OpenURI::HTTPError, tries: 5, base_interval: 1.5 do
+          page_link_data = Nokogiri::HTML(open(link)) 
+          links = page_link_data.css("td.body a:contains('Grade')")
+          links.map do |inspection|
+            @base + inspection['href']
+          end
+        end
+      rescue => e
+        # run this if retriable ends up re-rasing the exception
+        puts "!!! we were unable to get data from #{link}"
       end
     end
 
