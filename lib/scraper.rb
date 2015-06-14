@@ -100,30 +100,36 @@ module Inspectr
       CSV.open(write_file, "wb") do |csv|
         csv << ["business_id","name","address","city","state","postal_code","date","score","grade"]
         form_array.each_with_index do |form_link, index|
-          doc = Nokogiri::HTML(open(form_link))
-          puts "importing data: #{index + 1} out of #{form_array.length}..."
+        begin
+          Retriable.retriable on: OpenURI::HTTPError, tries: 5, base_interval: 1.5 do
+            doc = Nokogiri::HTML(open(form_link))
+            puts "importing data: #{index + 1} out of #{form_array.length}..."
 
-          restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9& ','')
-          inspection_date = self.restaurant_info(doc,"Date").strip
-          inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y/%m/%d')
-          street = self.restaurant_info(doc,"Address").strip
+            restaurant_name = self.restaurant_info(doc,"Establishment").strip.tr('^A-Za-z0-9& ','')
+            inspection_date = self.restaurant_info(doc,"Date").strip
+            inspection_date = Date.strptime(inspection_date, "%m/%d/%Y").strftime('%Y/%m/%d')
+            street = self.restaurant_info(doc,"Address").strip
 
-          city = self.restaurant_info(doc,"City/State").strip
-          city = city[0..-4] #removes state from string with index
+            city = self.restaurant_info(doc,"City/State").strip
+            city = city[0..-4] #removes state from string with index
 
-          state = self.restaurant_info(doc,"City/State").split(" ")
-          state = state.last
+            state = self.restaurant_info(doc,"City/State").split(" ")
+            state = state.last
 
-          permit = self.restaurant_info(doc,"Permit #").strip
+            permit = self.restaurant_info(doc,"Permit #").strip
 
-          zipcode = self.restaurant_info(doc,"Zipcode").strip
-          # current_grade = self.restaurant_score("#div_grade",doc)
-          current_score = self.restaurant_score("#div_finalScore",doc).to_i
+            zipcode = self.restaurant_info(doc,"Zipcode").strip
+            # current_grade = self.restaurant_score("#div_grade",doc)
+            current_score = self.restaurant_score("#div_finalScore",doc).to_i
 
-          current_grade = self.restaurant_score("#div_grade",doc).strip
+            current_grade = self.restaurant_score("#div_grade",doc).strip
 
-          csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score,current_grade]
-          sleep(2.7)
+            csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score,current_grade]
+          end
+        rescue => e
+          # run this if retriable ends up re-rasing the exception
+          puts "!!! we were unable to get data from #{inspection}"
+        end
         end
       end
     end
