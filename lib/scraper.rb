@@ -10,8 +10,8 @@ module Inspectr
 
    attr_reader :pages, :inspections, :form_links
 
-    def initialize(start_date="01/01/2014", end_date="01/01/2014")
-      @base = "http://ga.healthinspections.us/georgia/"
+    def initialize(base="http://ga.healthinspections.us/georgia/", start_date="01/01/2014", end_date="01/01/2014")
+      @base = base
       init = Nokogiri::HTML(open("http://ga.healthinspections.us/georgia/search.cfm?start=1&1=1&f=s&r=name&s=&inspectionType=&sd=#{start_date}&ed=#{end_date}&useDate=YES&county=Fulton&"))
       @pages = self.all_pages(init)
       @inspections = nil
@@ -58,9 +58,9 @@ module Inspectr
 
     attr_reader :form_array 
 
-    def initialize(file)
+    def initialize(file, base="http://ga.healthinspections.us/")
       @inspection_array = self.file_to_array(file)
-      @base = "http://ga.healthinspections.us/"
+      @base = base
     end
 
     def file_to_array(file)
