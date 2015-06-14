@@ -85,7 +85,6 @@ module Inspectr
               form_link = form_link[3..form_link.length] #removes ../ from every link
               form_url = @base + form_link
               f.puts form_url
-              raise OpenURI::HTTPError
             end
           rescue => e
             # run this if retriable ends up re-rasing the exception
