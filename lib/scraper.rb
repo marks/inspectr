@@ -4,6 +4,7 @@ require 'open-uri'
 require 'stringio'
 require 'date'
 require 'csv'
+require 'retriable'
 
 module Inspectr
   class PageScraper
@@ -76,13 +77,20 @@ module Inspectr
     def get_form_links(write_file)
       File.open(write_file, "w") do |f|
         @inspection_array.each_with_index do |inspection,index|
-          puts "getting form link: #{index + 1} out of #{@inspection_array.length}..."
-          doc = Nokogiri::HTML(open(inspection))
-          form_link = doc.css("a:contains('View Form')").attribute('href').value
-          form_link = form_link[3..form_link.length] #removes ../ from every link
-          form_url = @base + form_link
-          f.puts form_url
-          sleep(2.8)
+          begin
+            Retriable.retriable on: OpenURI::HTTPError, tries: 5, base_interval: 1.5 do
+              puts "getting form link: #{index + 1} out of #{@inspection_array.length} (#{inspection})..."
+              doc = Nokogiri::HTML(open(inspection))
+              form_link = doc.css("a:contains('View Form')").attribute('href').value
+              form_link = form_link[3..form_link.length] #removes ../ from every link
+              form_url = @base + form_link
+              f.puts form_url
+              raise OpenURI::HTTPError
+            end
+          rescue => e
+            # run this if retriable ends up re-rasing the exception
+            puts "!!! we were unable to get data from #{inspection}"
+          end
         end
       end
     end
