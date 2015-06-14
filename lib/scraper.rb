@@ -45,7 +45,6 @@ module Inspectr
         (start..finish).each_with_index do |x,index|
           puts "adding links for page #{index+1}..."
           f.puts self.inspection_links(self.pages[x])
-        sleep(2.8)
         end
       end
       erase_duplicates(write_file)
