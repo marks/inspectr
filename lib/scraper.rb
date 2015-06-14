@@ -105,8 +105,8 @@ module Inspectr
       CSV.open(write_file, "wb") do |csv|
         csv << ["business_id","name","address","city","state","postal_code","date","score","grade"]
         form_array.each_with_index do |form_link, index|
-        begin
-          Retriable.retriable on: OpenURI::HTTPError, tries: 5, base_interval: 1.5 do
+        # begin
+        #   Retriable.retriable on: OpenURI::HTTPError, tries: 5, base_interval: 1.5 do
             doc = Nokogiri::HTML(open(form_link))
             puts "importing data: #{index + 1} out of #{form_array.length}..."
 
@@ -129,12 +129,27 @@ module Inspectr
 
             current_grade = self.restaurant_score("#div_grade",doc).strip
 
+            compliance_columns = ["","in compliance","not incompliance","not applicable","not observed","","corrected on-site during inspection","repeat violation of the same code provision"]
+            doc.css("img[src=\"../../images/circle_closed2.jpg\"]").each do |filled_circle|
+              items_hash = {}
+              row = filled_circle.parent.parent
+              items_hash[:row_desc] = row.css("td:nth(6)").text.to_s.strip
+              
+              filled_columns = []
+              row.css("td").each_with_index do |col,i|
+                filled_columns << compliance_columns[i] if col.to_s.match('circle_closed2.jpg')
+              end
+              items_hash[:result] = filled_columns.join(" - ")
+              puts items_hash
+
+            end
+            exit
             csv << [permit, restaurant_name,street,city,state,zipcode,inspection_date,current_score,current_grade]
-          end
-        rescue => e
-          # run this if retriable ends up re-rasing the exception
-          puts "!!! we were unable to get data from #{inspection}"
-        end
+        #   end
+        # rescue => e
+        #   # run this if retriable ends up re-rasing the exception
+        #   puts "!!! we were unable to get data from #{form_link}"
+        # end
         end
       end
     end
